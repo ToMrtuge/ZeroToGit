@@ -1,8 +1,7 @@
-## ZeroToGit : 基于win的Git自学笔记
+## ZeroToGit : 基于小白的Git自学笔记
 ---
 ### 宇宙级本项目内容免责申明
 ---
-* 本文部分内容源自AI
 * 本文内容面向零基础小白，为不会使用Git的小伙伴入门学习使用
 
 ### 目录
@@ -25,6 +24,9 @@
 	- [ `.gitignore`文件](# 2. `.gitignore`文件)
 	- [Revert和Reset](# 3. Revert和Reset)
 * [Remote远程](# 六、Remote远程)
+	- [搭建并连接一个本地运行的“远程仓库”](# 1.搭建并连接一个本地运行的“远程仓库”)
+	- [协作者视角](# 2. 协作者视角)
+	- 
 ### 一、Git简介
 ---
 #### 1. Git是什么?
@@ -176,6 +178,7 @@ $git commit -m "first commit"	//commit 作一次提交
 * Git创建一个新的分支，本质上是创建一个可以移动的新指针。例如创建一个名为`testing`的分支
 `$git branch testing`
 实际效果图如下:
+
 <img src="./image/Createbranch.png" alt="效果图" style="zoom: 50%;" />
 
 * Git是怎么知道当前在哪一个分支上呢? 原来是分支上有一个名为`HEAD`的特殊指针，它指向现在所在位置
@@ -187,29 +190,34 @@ $git commit -m "first commit"	//commit 作一次提交
 $git checkout testing
 ```
 * 举个例子: 当`HEAD-->testing-->f30ab`
-  * commit一个新的镜像为`87ab2`
-  * `git checkout master`切换回`master`分支
-  * 再次commit一个新镜像为`c2b9e`
-  则会实现效果如下图:
-  <img src="./image/Branchtest.png" alt="效果图" style="zoom: 50%;" />
+    * commit一个新的镜像为`87ab2`
+    * `git checkout master`切换回`master`分支
+    * 再次commit一个新镜像为`c2b9e`
+        则会实现效果如下图:
+        <img src="./image/Branchtest.png" alt="效果图" style="zoom: 50%;" />
 
 #### 2. 分支的合并
 **合并的操作**
 为了方便理解分支的合并操作---**Merging**,我们引入一个例子
 一个项目git流程图如下:
+
 <img src="./image/4_2.png" alt="流程图" style="zoom: 67%;" />
+
 现在欲将issue分支合并到master分支并，需要用到Merge操作，指令如下:
 
 ```
 $git checkout master		//由于"master"分支是主分支，如果将issue分支合并到主分支，要先将"HEAD"指向master
 $git merge iss53
 ```
+
 此时iss53分支就合并到master分支上了，经过指令后的git分支变化如下:
 <img src="./image/4_3.png" alt="变化图" style="zoom:67%;" />
 此时我们已经合并了C5和C4到C6，此时你就不再需要`iss53`分支了，运行指令删除:
+
 ```
 $ git branch -d iss53
 ```
+
 **合并冲突和处理方案**
 * *合并冲突的原理*：当分支与主分支对同一文件的同一位置做了更改，再进行合并则会因为同区域代码不合产生冲突
 
@@ -268,8 +276,9 @@ $git branch -m 新的分支名
 一个远程仓库通常只是一个裸仓库（bare repository）— 即一个没有当前工作目录的仓库。 因为该仓库仅仅作为合作媒介，不需要从磁碟检查快照；存放的只有 Git 的资料。 简单的说，裸仓库就是你专案目录内的 .git 子目录内容，不包含其他资料。
 **协议**
 Git 可以使用四种主要的协议来传输资料：本地协议（Local），HTTP 协议，SSH（Secure Shell）协议及 Git 协议。 在此，我们将会讨论那些协议及哪些情形应该使用（或避免使用）他们。
-#### 1.搭建并连接一个本地运行的“远程仓库”
+#### 1. 搭建并连接一个本地运行的“远程仓库”
 **a.创建一个远程仓库**
+
 ```
 $mkdir ~/repo
 $cd ~/repo
@@ -282,3 +291,96 @@ $git init --bare remote-demo.git
 $git remote add origin ~/repos/remote-demo
 $git push -u origin master
 ```
+> * `-u` 建立upstream：后续push时自动推送，push时远程仓库和本地master分支会跟随移动
+> * `HEAD`在远程仓库中，指向的的分支是本地拉取后`HEAD`指向的分支
+> * 推送的分支是哪个，`HEAD`就会指向哪
+
+<img src="./image/6_1.png" alt="图像6-1" style="zoom:67%;" />
+**c.  fetch操作**
+当我将`master`分支进行一次`git push`操作后，git会自动执行一次`fetch`操作
+
+* 含义 ：在本地创造一个<u>只读</u>权限的分支指向master分支指向的最新镜像
+* 形式 ：`master -> abc <- origin/master <- origin/HEAD` 
+* 功能 ：本地追踪分支 / remote tracking branch，避免本地分支被覆盖
+#### 2. 协作者视角
+协作者要在原项目的基础上对项目进行更新，先要将原来的项目克隆到本地仓库：
+```
+$git clone ~repos/remote-demo.git
+```
+等同于：
+```
+$git init
+$git remote add origin remote-demo.git
+$git fetch origin
+$git checkout -b master
+```
+#### 3. 远程操作的相关指令
+**a. git fetch**
+`fetch`的工作过程是：
+连接工程 -> 获取引用 -> 计算新 commits 并下载 -> 更新remote tracking branch
+> `git fetch`不会改变本地分支
+
+**b . git push**
+`push`的工作过程是：
+连接远程 -> 本地预检 -> 计算新commits -> 尝试更新远程 upstream 分支
+当远程分支上已经有了本地没有的新提交时（例如协作者先一步 push 了代码），本地再执行 `push` 就会被 Git 拒绝并报错，这就是 push 时的冲突，术语叫 **non-fast-forward（非快进）**：
+```
+$git push origin master
+To ~/repos/remote-demo
+ ! [rejected]        master -> master (non-fast-forward)
+error: failed to push some refs to '...'
+```
+> * 报错的关键信息是 `rejected` 和 `non-fast-forward`，意思是远程分支已经领先于本地，无法直接更新
+> * 本质：本地和远程各自基于同一个起点，向不同方向提交，产生了分叉（diverged）
+
+**处理方法**
+一般先 `pull` 把远程的新提交拉下来，与本地合并（或变基），解决完冲突后再 `push`：
+```
+$git pull origin master     //拉取远程更新并与本地合并（pull = fetch + merge）
+# 若产生冲突，手动编辑冲突文件，保留需要的代码
+$git add .                  //标记冲突已解决
+$git commit -m "merge xxx"  //完成合并提交
+$git push origin master     //再次推送
+```
+> * 若不想产生多余的合并提交，可用 `git pull --rebase`，让本地提交“接到”远程提交之后
+> * 冲突的标记方式与前面「合并冲突」一致：`<<<<<<<` 与 `>>>>>>>` 之间是冲突内容，手动保留想要的代码即可
+
+**强制推送：`--force` 与 `--force-with-lease`**
+如果不想先合并、而是直接用本地分支覆盖远程分支，可以强制推送。但强推会**丢弃远程上的提交**，需谨慎使用。
+```
+$git push --force origin master
+```
+> * `--force` 无脑覆盖：不管远程现在是什么样，一律用本地分支覆盖，会把他人的提交冲掉
+
+更安全的做法是用 `--force-with-lease`：
+```
+$git push --force-with-lease origin master
+```
+> * `--force-with-lease` 带“租约”的强推：只有当远程分支仍是你上次看到的那个状态时才允许覆盖
+> * 若期间别人又推了新的提交，命令会被拒绝，从而避免误删他人的工作
+> * 记忆口诀：`--force` 闭眼覆盖，`--force-with-lease` 先确认“没人动过”再覆盖
+
+**c. git pull 与 fast-forward（快进）**
+`pull` 的工作过程：`git pull` = `git fetch` + `git merge`，即先拉取远程更新，再合并到当前分支。
+
+```
+$git pull origin master
+```
+**fast-forward（快进合并）**
+当本地分支没有新提交、只是远程多了几个提交时，两者呈一条直线，合并时 Git 只需把本地分支指针直接“前移”到远程最新位置，不产生合并提交：
+```
+本地:  A -> B
+远程:  A -> B -> C -> D
+pull后: A -> B -> C -> D   # 指针直接前移，无合并提交
+```
+> * 快进的前提：本地与远程没有分叉，历史是一条直线
+> * 若本地和远程各自都有新提交（分叉），则无法快进，必须真正 merge 或 rebase
+
+**pull --rebase**
+```
+$git pull --rebase origin master
+```
+> * `pull --rebase` = `fetch` + `rebase`：把本地的新提交“摘下来”，重新接到远程最新提交之后
+> * 好处：历史保持一条直线，没有多余的合并提交
+> * 对比：普通 `pull`（merge）会产生一个合并提交；`pull --rebase` 保持线性历史
+
